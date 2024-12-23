@@ -4,7 +4,7 @@ var frames = 0;
 var degree = Math.PI / 180;
 
 var sprite = new Image();
-sprite.src = "img/sprite.png"
+sprite.src = "./img/sprite.png"
 
 var flap = new Audio();
 flap.src = "sounds/flap.wav"
