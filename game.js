@@ -1,6 +1,7 @@
 var cvs = document.querySelector("canvas");
 var ctx = cvs.getContext("2d");
 var frames = 0;
+var lastTime = 0;
 var degree = Math.PI / 180;
 
 var sprite = new Image();
@@ -41,7 +42,9 @@ function clickHandler(){
         default:
             bird.speed = 0;
             bird.rotation = 0;
+            bird.animationTimer = 0;
             pipes.position = [];
+            pipes.spawnTimer = 0;
             score.value = 0;
             // fg.dx = 2;
             // pipes.dx = 2;
@@ -49,12 +52,13 @@ function clickHandler(){
             break;
     }
 }
-document.addEventListener("touch" , clickHandler)
-document.addEventListener("click" , clickHandler)
-document.addEventListener("keydown" , function(e){
-    if(e.which == 32)
+document.addEventListener("pointerdown", clickHandler);
+document.addEventListener("keydown", function(e){
+    if(e.which == 32){
+        e.preventDefault();
         clickHandler();
-})
+    }
+});
 
 var bg = {
     sx: 0,
@@ -127,11 +131,12 @@ var bird = {
     x: 50,
     y: 150,
     speed : 0,
-    gravity : 0.25,
-    jump : 4.6,
+    gravity : 0.20,
+    jump : 4.8,
     radius : 12,
     rotation : 0,
     animationIndex : 3,
+    animationTimer : 0,
     draw : function(){
         let bird = this.animation[this.animationIndex]
         ctx.save();
@@ -141,15 +146,18 @@ var bird = {
         ctx.restore();
     },
 
-    update : function(){
-        let period = state.current == state.getReady ? 10 : 5;
-        this.animationIndex += frames % period == 0 ? 1 : 0;
-        this.animationIndex = this.animationIndex % this.animation.length
+    update : function(dt){
+        let animationPeriod = state.current == state.getReady ? 10 / 60 : 5 / 60;
+        this.animationTimer += dt;
+        if(this.animationTimer >= animationPeriod){
+            this.animationIndex = (this.animationIndex + 1) % this.animation.length;
+            this.animationTimer = 0;
+        }
         if(state.current == state.getReady){
             this.y = 150;
         }else{
-            this.speed += this.gravity;
-            this.y += this.speed;
+            this.speed += this.gravity * dt * 60;
+            this.y += this.speed * dt * 60;
             if(this.speed < this.jump){
                 this.rotation = -25 *degree;
             }else{
@@ -186,6 +194,7 @@ var pipes = {
     gap : 80,
     position : [],
     maxYPos : -150,
+    spawnTimer : 0,
     draw : function(){
         for(let i = 0; i < this.position.length; i++){
             let p = this.position[i]
@@ -195,35 +204,41 @@ var pipes = {
             ctx.drawImage(sprite,this.bottom.sX,this.bottom.sY,this.w,this.h, p.x,bottomYPos,this.w,this.h)
         }
     },
-    update : function(){
+    update : function(dt){
         if(state.current != state.game) return;
-        if(frames % 100 == 0){
+        this.spawnTimer += dt;
+        if(this.spawnTimer >= 100 / 60){
             this.position.push({
                 x: cvs.width,
                 y: this.maxYPos * (Math.random() + 1)
-            })
+            });
+            this.spawnTimer = 0;
         }
 
-        for(let i = 0; i < this.position.length; i++){
+        for(let i = this.position.length - 1; i >= 0; i--){
             let p = this.position[i]
-            p.x -= this.dx
+            p.x -= this.dx * dt * 60
 
             let bottomPipesPos = p.y +this.h + this.gap;
 
             if(bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.w && bird.y + bird.radius > p.y 
                 && bird.y - bird.radius < p.y + this.h){
                     state.current = state.over;
+                    bird.speed = 0;
                     hit.play();
+                    return;
             }
 
             if(bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.w && bird.y + bird.radius > bottomPipesPos
                 && bird.y - bird.radius < bottomPipesPos + this.h){
                     state.current = state.over;
+                    bird.speed = 0;
                     hit.play();
+                    return;
             }
 
             if(p.x + this.w <= 0){
-                this.position.shift()
+                this.position.splice(i, 1);
                 score.value += 1;
                 Score.play()
                 score.best = Math.max(score.value,score.best);
@@ -262,10 +277,10 @@ var score = {
 }
 
 
-function update(){
-    bird.update()
-    fg.update()
-    pipes.update()
+function update(dt){
+    bird.update(dt);
+    fg.update();
+    pipes.update(dt);
 }
 
 function draw(){
@@ -280,11 +295,14 @@ function draw(){
     score.draw()
 }
 
-function animate(){
-    update()
-    draw()
-    frames ++;
-    requestAnimationFrame(animate)
+function animate(time){
+    if(!lastTime) lastTime = time;
+    frameTime = Math.min((time - lastTime) / 1000, 0.05);
+    lastTime = time;
+    update(frameTime);
+    draw();
+    frames++;
+    requestAnimationFrame(animate);
 }
 
-animate()
+requestAnimationFrame(animate);
