@@ -85,4 +85,4 @@ The game is designed for modern browsers with support for HTML5 Canvas, `request
 
 ## License
 
-No license has been specified for this project yet. Add a license file before distributing or reusing the code publicly.
+This project is licensed under the [MIT License](LICENSE).

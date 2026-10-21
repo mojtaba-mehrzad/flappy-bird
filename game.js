@@ -33,6 +33,7 @@ var state = {
     over: 2
 }
 
+// Increase world speed at each ten-point milestone.
 function updateGameSpeed(){
     var nextSpeedLevel = Math.floor(score.value / 10);
     if(nextSpeedLevel <= speedLevel) return;
@@ -43,6 +44,7 @@ function updateGameSpeed(){
     fg.dx = gameSpeed;
 }
 
+// Handle mouse, touch, and keyboard game input.
 function clickHandler(){
     switch(state.current){
         case state.getReady:
@@ -84,6 +86,7 @@ var bg = {
     h: 226,
     x: 0,
     y: cvs.height - 226,
+    // Draw two tiles to cover the canvas width.
     draw : function(){
         ctx.drawImage(sprite,this.sx,this.sy,this.w,this.h,this.x,this.y,this.w,this.h)
         ctx.drawImage(sprite,this.sx,this.sy,this.w,this.h,this.x + this.w,this.y,this.w,this.h)
@@ -98,11 +101,13 @@ var fg = {
     x: 0,
     dx: 2,
     y: cvs.height - 112,
+    // Draw the scrolling ground tiles.
     draw : function(){
         ctx.drawImage(sprite,this.sx,this.sy,this.w,this.h,this.x,this.y,this.w,this.h)
         ctx.drawImage(sprite,this.sx,this.sy,this.w,this.h,this.x + this.w,this.y,this.w,this.h)
     },
 
+    // Move the ground according to elapsed time.
     update : function(dt){
         if(state.current == state.game){
             dt = dt || 1 / 60;
@@ -118,6 +123,7 @@ var getReady = {
     h: 152,
     x: cvs.width/2 - 173/2,
     y: 80,
+    // Draw the ready screen before the game starts.
     draw : function(){
         if(state.current == state.getReady)
         ctx.drawImage(sprite,this.sx,this.sy,this.w,this.h,this.x,this.y,this.w,this.h)
@@ -131,6 +137,7 @@ var gameOver = {
     h: 202,
     x: cvs.width/2 - 225/2,
     y: 90,
+    // Draw the game-over screen after a collision.
     draw : function(){
         if(state.current == state.over)
         ctx.drawImage(sprite,this.sx,this.sy,this.w,this.h,this.x,this.y,this.w,this.h)
@@ -155,6 +162,7 @@ var bird = {
     rotation : 0,
     animationIndex : 3,
     animationTimer : 0,
+    // Draw the animated bird with its current rotation.
     draw : function(){
         let bird = this.animation[this.animationIndex]
         ctx.save();
@@ -164,6 +172,7 @@ var bird = {
         ctx.restore();
     },
 
+    // Update bird animation, physics, and ground collision.
     update : function(dt){
         let animationPeriod = state.current == state.getReady ? 10 / 60 : 5 / 60;
         this.animationTimer += dt;
@@ -194,6 +203,7 @@ var bird = {
 
     },
 
+    // Apply an upward impulse to the bird.
     flap : function(){
         this.speed = -this.jump;
     }
@@ -209,6 +219,7 @@ var pipes = {
     position : [],
     maxYPos : -150,
     spawnTimer : 0,
+    // Draw every active pipe pair.
     draw : function(){
         for(let i = 0; i < this.position.length; i++){
             let p = this.position[i]
@@ -218,6 +229,7 @@ var pipes = {
             ctx.drawImage(sprite,this.bottom.sX,this.bottom.sY,this.w,this.h, p.x,bottomYPos,this.w,this.h)
         }
     },
+    // Spawn, move, and check collisions for the pipes.
     update : function(dt){
         if(state.current != state.game) return;
         this.spawnTimer += dt;
@@ -268,6 +280,7 @@ var pipes = {
 var score = {
     best : parseInt(localStorage.getItem("best")) || 0,
     value : 0,
+    // Draw the current score and saved best score.
     draw : function(){
         ctx.fillStyle = "#fff"
         ctx.strokeStyle = "#000"
@@ -292,12 +305,14 @@ var score = {
 }
 
 
+// Update all game objects for the current frame.
 function update(dt){
     bird.update(dt);
     fg.update(dt);
     pipes.update(dt);
 }
 
+// Render the complete game scene.
 function draw(){
     ctx.fillStyle = "#70c5ce"
     ctx.fillRect(0,0,cvs.width,cvs.height)
@@ -310,18 +325,15 @@ function draw(){
     score.draw()
 }
 
+// Run the game loop with frame-time compensation.
 function animate(time){
     if(!lastTime) lastTime = time;
-    frameTime = Math.min((time - lastTime) / 1000, 0.05);
+    var dt = Math.min((time - lastTime) / 1000, 0.05);
     lastTime = time;
-    update(frameTime);
+    update(dt);
     draw();
     frames++;
     requestAnimationFrame(animate);
 }
 
-<<<<<<< HEAD
 requestAnimationFrame(animate);
-=======
-animate()
->>>>>>> 13e5af21c5b32fb378248b8a705d47537520872a
