@@ -9,7 +9,7 @@ var speedIncrease = 0.15;
 var maxGameSpeed = 3;
 
 var sprite = new Image();
-sprite.src = "img/sprite.png"
+sprite.src = "./img/sprite.png"
 
 var flap = new Audio();
 flap.src = "sounds/flap.wav"
@@ -320,4 +320,8 @@ function animate(time){
     requestAnimationFrame(animate);
 }
 
+<<<<<<< HEAD
 requestAnimationFrame(animate);
+=======
+animate()
+>>>>>>> 13e5af21c5b32fb378248b8a705d47537520872a
