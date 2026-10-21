@@ -3,6 +3,10 @@ var ctx = cvs.getContext("2d");
 var frames = 0;
 var lastTime = 0;
 var degree = Math.PI / 180;
+var speedLevel = 0;
+var baseGameSpeed = 2;
+var speedIncrease = 0.15;
+var maxGameSpeed = 3;
 
 var sprite = new Image();
 sprite.src = "img/sprite.png"
@@ -29,6 +33,16 @@ var state = {
     over: 2
 }
 
+function updateGameSpeed(){
+    var nextSpeedLevel = Math.floor(score.value / 10);
+    if(nextSpeedLevel <= speedLevel) return;
+
+    speedLevel = nextSpeedLevel;
+    var gameSpeed = Math.min(baseGameSpeed + speedLevel * speedIncrease, maxGameSpeed);
+    pipes.dx = gameSpeed;
+    fg.dx = gameSpeed;
+}
+
 function clickHandler(){
     switch(state.current){
         case state.getReady:
@@ -45,6 +59,9 @@ function clickHandler(){
             bird.animationTimer = 0;
             pipes.position = [];
             pipes.spawnTimer = 0;
+            pipes.dx = baseGameSpeed;
+            fg.dx = baseGameSpeed;
+            speedLevel = 0;
             score.value = 0;
             // fg.dx = 2;
             // pipes.dx = 2;
@@ -86,9 +103,10 @@ var fg = {
         ctx.drawImage(sprite,this.sx,this.sy,this.w,this.h,this.x + this.w,this.y,this.w,this.h)
     },
 
-    update : function(){
+    update : function(dt){
         if(state.current == state.game){
-            this.x = (this.x - this.dx) % (this.w/2);
+            dt = dt || 1 / 60;
+            this.x = (this.x - this.dx * dt * 60) % (this.w/2);
         }
     }
 }
@@ -132,7 +150,7 @@ var bird = {
     y: 150,
     speed : 0,
     gravity : 0.20,
-    jump : 4.8,
+    jump : 3.8,
     radius : 12,
     rotation : 0,
     animationIndex : 3,
@@ -174,10 +192,6 @@ var bird = {
             }
         }
 
-        // if(score.value % 10 == 0){
-        //     fg.dx += 0.1;
-        //     pipes.dx += 0.1;
-        // }
     },
 
     flap : function(){
@@ -240,6 +254,7 @@ var pipes = {
             if(p.x + this.w <= 0){
                 this.position.splice(i, 1);
                 score.value += 1;
+                updateGameSpeed();
                 Score.play()
                 score.best = Math.max(score.value,score.best);
                 localStorage.setItem("best", score.best);
@@ -279,7 +294,7 @@ var score = {
 
 function update(dt){
     bird.update(dt);
-    fg.update();
+    fg.update(dt);
     pipes.update(dt);
 }
 
